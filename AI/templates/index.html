@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PaperPilot.AI - Exam Paper Generator</title>
+    <style>
+        /* 🎨 THEME VARIABLES */
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            --text-color: #334155;
+            --text-muted: #64748b;
+            --card-bg: rgba(255, 255, 255, 0.88);
+            --card-border: rgba(226, 232, 240, 0.8);
+            --header-bg: rgba(255, 255, 255, 0.92);
+            --modal-bg: #ffffff;
+            --modal-title: #0f172a;
+            --file-label-bg: rgba(248, 250, 252, 0.9);
+            --file-label-border: #cbd5e1;
+            --workspace-bg: rgba(30, 41, 59, 0.65);
+            --input-bg: #ffffff;
+            --input-text: #0f172a;
+            --input-border: #cbd5e1;
+            --header-subtext: #475569;
+            --primary-orange: #ea580c;
+            --primary-glow: rgba(234, 88, 12, 0.4);
+            --accent-green: #10b981;
+        }
+
+        body.dark-theme {
+            --bg-gradient: linear-gradient(135deg, #090d16 0%, #0f172a 50%, #020617 100%);
+            --text-color: #f1f5f9;
+            --text-muted: #94a3b8;
+            --card-bg: rgba(30, 41, 59, 0.85);
+            --card-border: rgba(51, 65, 85, 0.8);
+            --header-bg: rgba(15, 23, 42, 0.92);
+            --modal-bg: #1e293b;
+            --modal-title: #f8fafc;
+            --file-label-bg: rgba(15, 23, 42, 0.8);
+            --file-label-border: #334155;
+            --workspace-bg: rgba(15, 23, 42, 0.85);
+            --input-bg: #0f172a;
+            --input-text: #f8fafc;
+            --input-border: #334155;
+            --header-subtext: #94a3b8;
+        }
+
+        body { 
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--bg-gradient); 
+            background-attachment: fixed;
+            margin: 0; 
+            padding: 0; 
+            color: var(--text-color); 
+            transition: all 0.3s ease;
+            min-height: 100vh;
+        }
+        
+        /* 🌟 SPLASH SCREEN ANIMATION */
+        .splash-screen { 
+            position: fixed; 
+            inset: 0; 
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+            background-image: url('paperpilot.png'); 
+            background-size: 200px auto; 
+            background-position: center; 
+            background-repeat: no-repeat;
+            z-index: 99999; 
+            opacity: 1; 
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1); 
+            box-shadow: inset 0 0 150px rgba(0,0,0,0.9);
+        }
+
+        #mainAppWrapper { 
+            display: none; 
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        /* 🔝 HEADER DESIGN */
+        header { 
+            background: var(--header-bg); 
+            padding: 14px 30px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.25); 
+            backdrop-filter: blur(12px); 
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .header-right { display: flex; align-items: center; gap: 12px; }
+        
+        .app-logo { 
+            width: 48px; 
+            height: 48px; 
+            object-fit: cover; 
+            border-radius: 50%;
+            border: 2px solid var(--primary-orange); 
+            box-shadow: 0 0 15px var(--primary-glow); 
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            cursor: pointer;
+        }
+
+        .app-logo:hover {
+            transform: scale(1.12) rotate(8deg);
+            box-shadow: 0 0 25px var(--primary-orange);
+        }
+        
+        header h1 { 
+            margin: 0; 
+            font-size: 22px; 
+            font-weight: 900; 
+            letter-spacing: 1px; 
+            text-transform: uppercase;
+        }
+
+        .title-orange { color: var(--primary-orange); text-shadow: 0 0 10px var(--primary-glow); }
+        .title-black { color: #000000; }
+        body.dark-theme .title-black { color: #f8fafc; }
+
+        header p { margin: 2px 0 0 0; color: var(--header-subtext); font-size: 10px; font-weight: 700; letter-spacing: 1.2px; }
+        
+        /* 📐 MAIN CONTAINER */
+        .main-container { 
+            max-width: 1400px; 
+            margin: 25px auto; 
+            padding: 0 20px; 
+            display: grid; 
+            grid-template-columns: 1fr; 
+            gap: 25px; 
+        }
+
+        @media (min-width: 992px) { 
+            .main-container { grid-template-columns: 380px 1fr; } 
+        }
+        
+        /* 🃏 GLASS CARDS */
+        .card { 
+            background: var(--card-bg); 
+            padding: 22px; 
+            border-radius: 16px; 
+            border: 1px solid var(--card-border); 
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); 
+            margin-bottom: 20px; 
+            backdrop-filter: blur(16px); 
+            position: relative; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: slideUp 0.5s ease-out;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.15);
+            border-color: rgba(234, 88, 12, 0.4);
+        }
+
+        .card h2 { 
+            margin-top: 0; 
+            font-size: 14px; 
+            color: var(--text-muted); 
+            font-weight: 800; 
+            border-bottom: 2px solid var(--card-border); 
+            padding-bottom: 10px; 
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+        
+        /* 📁 FILE UPLOAD LABELS */
+        .file-label { 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--file-label-bg); 
+            border: 2px dashed var(--file-label-border); 
+            padding: 18px; 
+            text-align: center; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            color: var(--text-muted); 
+            margin-top: 12px; 
+            transition: all 0.3s ease; 
+        }
+
+        .file-label:hover { 
+            background-color: var(--card-border); 
+            border-color: var(--primary-orange);
+            color: var(--primary-orange);
+            transform: scale(1.02);
+        }
+        
+        /* 🔘 BUTTONS WITH ANIMATION */
+        button { 
+            cursor: pointer; 
+            font-weight: 700; 
+            border: none; 
+            border-radius: 10px; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            outline: none;
+        }
+
+        button:active { transform: scale(0.96); }
+
+        .btn-theme { background-color: #475569; color: #ffffff; border: 1px solid #64748b; padding: 8px 16px; font-size: 12px; }
+        .btn-theme:hover { background-color: #334155; transform: translateY(-2px); }
+
+        .btn-settings { background: linear-gradient(135deg, #312e81, #4338ca); color: #fcd34d; border: 1px solid #4338ca; padding: 8px 16px; font-size: 12px; box-shadow: 0 4px 12px rgba(67, 56, 202, 0.3); }
+        .btn-settings:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(67, 56, 202, 0.5); }
+        
+        .btn-contact { background: linear-gradient(135deg, #0284c7, #0369a1); color: #ffffff; border: 1px solid #38bdf8; padding: 8px 16px; font-size: 12px; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3); }
+        .btn-contact:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(2, 132, 199, 0.5); }
+
+        .btn-generate { 
+            background: linear-gradient(135deg, #ea580c, #f97316); 
+            color: white; 
+            width: 100%; 
+            padding: 16px; 
+            border-radius: 12px; 
+            font-size: 16px; 
+            letter-spacing: 0.5px;
+            box-shadow: 0 8px 20px var(--primary-glow); 
+            position: relative;
+            overflow: hidden;
+            animation: pulseGlow 2.5s infinite;
+        }
+
+        .btn-generate:hover { 
+            background: linear-gradient(135deg, #c2410c, #ea580c); 
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 0 12px 25px var(--primary-glow);
+        }
+
+        .btn-action { padding: 9px 18px; font-size: 12px; color: white; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+        .btn-action:hover { transform: translateY(-2px); }
+        
+        .btn-delete-file { display: none; background-color: #ef4444; color: white; padding: 6px 12px; font-size: 11px; border-radius: 8px; margin-top: 10px; width: 100%; text-align: center; }
+        .btn-delete-file:hover { background-color: #dc2626; }
+        
+        /* ⏳ PROGRESS BAR */
+        .progress-container { display: none; margin-top: 18px; background-color: rgba(226, 232, 240, 0.8); border-radius: 10px; overflow: hidden; position: relative; height: 22px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+        .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, #ea580c, #f97316, #10b981); transition: width 0.4s ease; background-size: 200% 100%; animation: gradientMove 2s linear infinite; }
+        .progress-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: #0f172a; }
+
+        /* 🖼️ WORKSPACE & A4 PREVIEW */
+        .preview-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+        .preview-header h2 { margin: 0; font-size: 18px; font-weight: 800; color: #ffffff; text-shadow: 0 2px 8px rgba(0,0,0,0.6); letter-spacing: 0.5px; }
+        
+        .workspace { 
+            background: var(--workspace-bg); 
+            padding: 30px; 
+            border-radius: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 20px; 
+            align-items: center; 
+            overflow-x: auto; 
+            backdrop-filter: blur(12px); 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.2);
+        }
+        
+        .page-block-wrapper { width: 100%; max-width: 850px; display: flex; flex-direction: column; gap: 10px; }
+        .page-control-bar { display: flex; justify-content: flex-end; width: 100%; }
+        .btn-single-save { background-color: #0284c7; color: white; padding: 6px 14px; font-size: 11px; border-radius: 6px; box-shadow: 0 4px 10px rgba(2, 132, 199, 0.3); }
+
+        /* 🌟 ONLY ONE SINGLE SOLID PURE WHITE A4 EXAM PAPER */
+        .printable-paper { 
+            background-color: #ffffff !important; 
+            background: #ffffff !important;
+            color: #000000 !important; 
+            padding: 20mm 18mm !important; 
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4) !important; 
+            width: 210mm !important;
+            min-height: 297mm !important;
+            height: auto !important;
+            box-sizing: border-box !important; 
+            border: 1px solid #cbd5e1 !important;
+            outline: none !important;
+            font-family: 'Times New Roman', 'Mangal', 'Nirmala UI', serif !important;
+            font-size: 13pt !important;
+            line-height: 1.4 !important;
+            position: relative !important;
+            margin: 0 auto 20px auto !important;
+            border-radius: 3px !important;
+        }
+
+        /* ❌ NO NESTED BOXES: Flatten all inner wrapper divs completely */
+        .printable-paper .pp-source-page,
+        .printable-paper div, 
+        .printable-paper section, 
+        .printable-paper p {
+            background: transparent !important;
+            background-color: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-height: auto !important;
+            height: auto !important;
+            padding: 0 !important;
+            margin: 0 0 6px 0 !important;
+            box-sizing: border-box !important;
+            color: #000000 !important;
+        }
+
+        .printable-paper * {
+            color: #000000 !important;
+        }
+
+        .printable-paper table { 
+            width: 100% !important; 
+            border-collapse: collapse !important; 
+            margin: 10px 0 !important; 
+            background: transparent !important;
+        }
+
+        .printable-paper table th,
+        .printable-paper table td { 
+            border: 1px solid #000000 !important; 
+            padding: 5px 8px !important; 
+            vertical-align: middle !important; 
+            color: #000000 !important;
+        }
+
+        .printable-paper svg { 
+            display: block !important; 
+            max-width: 100% !important; 
+            height: auto !important; 
+            margin: 12px auto !important;
+        }
+
+   /* 🌟 FAINT & LIGHT WATERMARK FIX */
+        .paper-watermark {
+            position: absolute !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) rotate(-30deg) !important;
+            font-size: 48pt !important;
+            font-weight: 800 !important;
+            color: #000000 !important;
+            opacity: 0.06 !important; /* एकदम हलका फिकट लुक */
+            white-space: nowrap !important;
+            pointer-events: none !important;
+            user-select: none !important;
+            z-index: 0 !important;
+        }
+
+        /* वॉटरमार्क वगळता इतर सर्व मजकूर डार्क काळा ठेवण्यासाठी */
+        .printable-paper *:not(.paper-watermark) {
+            color: #000000 !important;
+        }
+
+        /* 🖨️ PERFECT FULL-PAGE PDF PRINTING */
+        @media print { 
+            @page { 
+                size: A4; 
+                margin: 12mm 15mm; 
+            }
+            html, body { 
+                background: #ffffff !important; 
+                color: #000000 !important;
+                overflow: visible !important;
+            } 
+            .no-print, header, #splashScreen, #ppStartup, .page-control-bar, .preview-header, .card, .progress-container, .done-animated-container { 
+                display: none !important; 
+            } 
+            .workspace, .page-block-wrapper { 
+                background: none !important; 
+                padding: 0 !important; 
+                margin: 0 !important; 
+                border: none !important; 
+                box-shadow: none !important;
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            .printable-paper { 
+                box-shadow: none !important; 
+                border: none !important; 
+                padding: 0 !important; 
+                width: 100% !important; 
+                margin: 0 !important; 
+                min-height: auto !important; 
+                font-size: 12pt !important;
+                line-height: 1.35 !important;
+            } 
+            .printable-paper table,
+            .printable-paper table th,
+            .printable-paper table td {
+                border: 1px solid #000 !important;
+                page-break-inside: avoid !important;
+            }
+        }
+
+        /* 🪟 MODALS */
+        .modal-overlay { position: fixed; inset: 0; background-color: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 100; opacity: 0; transition: opacity 0.3s ease; }
+        .modal-overlay.active { display: flex; opacity: 1; }
+        
+        .modal-box { 
+            background: var(--modal-bg); 
+            color: var(--text-color); 
+            border-radius: 20px; 
+            width: 90%; 
+            max-width: 520px; 
+            padding: 28px; 
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4); 
+            border: 1px solid var(--card-border);
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .modal-overlay.active .modal-box { transform: scale(1); }
+
+        .modal-title-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--card-border); padding-bottom: 12px; margin-bottom: 18px; }
+        .modal-title-bar h3 { margin: 0; font-size: 16px; color: var(--modal-title); font-weight: 800; }
+        .close-x { background: none; border: none; font-size: 22px; color: #94a3b8; cursor: pointer; transition: color 0.2s; }
+        .close-x:hover { color: #ef4444; }
+        
+        .key-input-group { display: flex; gap: 10px; margin-top: 12px; }
+        .key-input-group input, textarea, input[type="text"] { 
+            background: var(--input-bg) !important; 
+            color: var(--input-text) !important; 
+            border: 1px solid var(--input-border) !important; 
+            border-radius: 10px;
+            padding: 11px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .key-input-group input:focus, textarea:focus { border-color: var(--primary-orange) !important; }
+        .key-input-group input { flex-grow: 1; font-size: 13px; }
+        .btn-add { background-color: #1e293b; color: white; padding: 0 18px; border-radius: 10px; }
+        
+        .keys-list { max-height: 160px; overflow-y: auto; background: var(--file-label-bg); border: 1px solid var(--card-border); border-radius: 10px; margin-top: 15px; padding: 10px; }
+        .key-row { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); color: var(--text-color); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--card-border); margin-bottom: 6px; font-size: 12px; font-family: monospace; }
+        .btn-del { color: #ef4444; background: none; border: none; font-size: 12px; }
+
+        .contact-card-box { background: var(--file-label-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 18px; margin-top: 10px; }
+
+        /* ✅ ANIMATIONS */
+        .done-animated-container { display: none; text-align: center; margin-top: 15px; }
+        .checkmark-circle { width: 52px; height: 52px; border-radius: 50%; background: #10b981; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4); animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .checkmark-icon { color: white; font-size: 28px; font-weight: bold; }
+        .done-text { color: #10b981; font-weight: 800; font-size: 14px; margin-top: 8px; letter-spacing: 0.5px; }
+
+        .who-we-are-card { margin-top: 20px; text-align: center; padding: 18px; position: relative; overflow: hidden; }
+        .who-we-are-card:hover { border-color: var(--primary-orange); }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes popIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+        @keyframes pulseGlow { 0% { box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.5); } 70% { box-shadow: 0 0 0 15px rgba(234, 88, 12, 0); } 100% { box-shadow: 0 0 0 0 rgba(234, 88, 12, 0); } }
+        @keyframes gradientMove { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+        
+/* =========================================================
+   PAPERPILOT.AI — PREMIUM UI PACK
+   ========================================================= */
+:root {
+    --pp-orange: #ff6b1a;
+    --pp-orange-2: #ff9f43;
+    --pp-blue: #38bdf8;
+    --pp-purple: #8b5cf6;
+    --pp-green: #34d399;
+    --pp-glass: rgba(255,255,255,.075);
+}
+
+body {
+    overflow-x: hidden;
+    position: relative;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: -25%;
+    z-index: -10;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 18% 25%, rgba(255,107,26,.22), transparent 22%),
+        radial-gradient(circle at 82% 20%, rgba(56,189,248,.18), transparent 22%),
+        radial-gradient(circle at 75% 82%, rgba(139,92,246,.18), transparent 24%),
+        radial-gradient(circle at 20% 85%, rgba(52,211,153,.12), transparent 20%);
+    filter: blur(25px);
+    animation: ppAurora 16s ease-in-out infinite alternate;
+}
+
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -9;
+    pointer-events: none;
+    opacity: .14;
+    background-image:
+        linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px);
+    background-size: 42px 42px;
+    mask-image: radial-gradient(circle at center, black, transparent 78%);
+    animation: ppGrid 20s linear infinite;
+}
+
+@keyframes ppAurora {
+    0% { transform: translate3d(-2%, -1%, 0) scale(1); }
+    50% { transform: translate3d(3%, 2%, 0) scale(1.08); }
+    100% { transform: translate3d(-1%, 4%, 0) scale(1.02); }
+}
+@keyframes ppGrid {
+    from { background-position: 0 0; }
+    to { background-position: 42px 42px; }
+}
+
+header {
+    overflow: hidden;
+    border-bottom: 1px solid rgba(255,255,255,.14);
+}
+header::before {
+    content: "";
+    position: absolute;
+    left: -20%;
+    top: 0;
+    width: 40%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #ff6b1a, #ffd166, #38bdf8, transparent);
+    box-shadow: 0 0 18px rgba(255,107,26,.8);
+    animation: ppBeam 4s linear infinite;
+}
+header::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -35%;
+    width: 28%;
+    transform: skewX(-20deg);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent);
+    animation: ppHeaderShine 7s ease-in-out infinite;
+}
+@keyframes ppBeam {
+    from { left: -35%; }
+    to { left: 105%; }
+}
+@keyframes ppHeaderShine {
+    0%,55% { left: -35%; }
+    75%,100% { left: 120%; }
+}
+
+.app-logo {
+    animation: ppLogo 4s ease-in-out infinite;
+}
+@keyframes ppLogo {
+    0%,100% {
+        transform: translateY(0) rotate(0);
+        box-shadow: 0 0 14px var(--primary-glow);
+    }
+    50% {
+        transform: translateY(-4px) rotate(3deg);
+        box-shadow: 0 0 30px rgba(234,88,12,.65), 0 0 55px rgba(234,88,12,.18);
+    }
+}
+
+.header-right button {
+    position: relative;
+    overflow: hidden;
+    transform: translateZ(0);
+}
+.header-right button::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, transparent 25%, rgba(255,255,255,.22) 50%, transparent 75%);
+    transform: translateX(-130%);
+    transition: transform .65s ease;
+}
+.header-right button:hover::before {
+    transform: translateX(130%);
+}
+.header-right button:hover {
+    transform: translateY(-4px) scale(1.035);
+}
+
+.card {
+    overflow: hidden;
+    isolation: isolate;
+}
+.card::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    z-index: -1;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(120deg,
+        rgba(255,107,26,.42),
+        transparent 28%,
+        rgba(56,189,248,.25) 52%,
+        transparent 74%,
+        rgba(139,92,246,.32));
+    -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: .55;
+    animation: ppBorder 6s linear infinite;
+}
+.card::after {
+    content: "";
+    position: absolute;
+    width: 160px;
+    height: 160px;
+    right: -100px;
+    top: -100px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,107,26,.18), transparent 68%);
+    transition: all .55s cubic-bezier(.2,.8,.2,1);
+    pointer-events: none;
+}
+.card:hover {
+    transform: translateY(-7px) scale(1.012);
+    box-shadow: 0 22px 50px rgba(0,0,0,.20), 0 0 0 1px rgba(255,107,26,.12);
+}
+.card:hover::after {
+    width: 230px;
+    height: 230px;
+    right: -80px;
+    top: -80px;
+}
+@keyframes ppBorder {
+    0% { filter: hue-rotate(0deg); }
+    100% { filter: hue-rotate(45deg); }
+}
+
+.file-label {
+    position: relative;
+    overflow: hidden;
+    min-height: 82px;
+}
+.file-label::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -35%;
+    width: 22%;
+    transform: skewX(-18deg);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
+    animation: ppScan 3.8s ease-in-out infinite;
+}
+.file-label:hover {
+    border-color: var(--pp-orange);
+    box-shadow: 0 0 0 5px rgba(255,107,26,.08), 0 15px 32px rgba(255,107,26,.14);
+    transform: translateY(-4px) scale(1.015);
+}
+@keyframes ppScan {
+    0%,45% { left: -35%; }
+    75%,100% { left: 125%; }
+}
+
+.btn-generate {
+    border: 1px solid rgba(255,255,255,.25);
+    background: linear-gradient(110deg, #ea580c, #ff7a18, #f59e0b, #ea580c);
+    background-size: 300% 100%;
+    box-shadow:
+        0 10px 30px rgba(234,88,12,.34),
+        0 0 0 1px rgba(255,255,255,.08) inset;
+    animation: ppGenerateGradient 4s ease infinite, ppGenerateFloat 3s ease-in-out infinite;
+}
+.btn-generate:hover {
+    background-position: 100% 50%;
+    transform: translateY(-7px) scale(1.025);
+    box-shadow:
+        0 18px 45px rgba(234,88,12,.48),
+        0 0 35px rgba(255,159,67,.25);
+}
+.btn-generate::after {
+    content: "";
+    position: absolute;
+    top: -80%;
+    left: -60%;
+    width: 45%;
+    height: 260%;
+    transform: rotate(22deg);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.48), transparent);
+    animation: ppButtonShine 2.8s ease-in-out infinite;
+}
+@keyframes ppGenerateGradient {
+    0%,100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+@keyframes ppGenerateFloat {
+    0%,100% { box-shadow: 0 10px 30px rgba(234,88,12,.34); }
+    50% { box-shadow: 0 14px 38px rgba(234,88,12,.50), 0 0 25px rgba(255,159,67,.18); }
+}
+@keyframes ppButtonShine {
+    0%,35% { left: -60%; }
+    70%,100% { left: 125%; }
+}
+
+.btn-action,
+.btn-theme,
+.btn-settings,
+.btn-contact,
+.btn-single-save,
+.btn-add {
+    transition: transform .25s ease, box-shadow .25s ease, filter .25s ease;
+}
+.btn-action:hover,
+.btn-theme:hover,
+.btn-settings:hover,
+.btn-contact:hover,
+.btn-single-save:hover,
+.btn-add:hover {
+    filter: brightness(1.13) saturate(1.18);
+    transform: translateY(-4px) scale(1.025);
+}
+
+.progress-container {
+    border: 1px solid rgba(255,255,255,.18);
+}
+.progress-bar {
+    position: relative;
+    overflow: hidden;
+}
+.progress-bar::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.42), transparent);
+    transform: translateX(-100%);
+    animation: ppProgress 1.15s linear infinite;
+}
+@keyframes ppProgress {
+    to { transform: translateX(100%); }
+}
+
+.workspace {
+    position: relative;
+    overflow: hidden;
+}
+.workspace::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 50% 10%, rgba(56,189,248,.10), transparent 30%),
+        radial-gradient(circle at 50% 95%, rgba(255,107,26,.10), transparent 30%);
+}
+.workspace::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -130px;
+    width: 700px;
+    height: 260px;
+    transform: translateX(-50%);
+    background: radial-gradient(ellipse, rgba(56,189,248,.13), transparent 68%);
+    filter: blur(12px);
+    pointer-events: none;
+    animation: ppFloorGlow 5s ease-in-out infinite alternate;
+}
+@keyframes ppFloorGlow {
+    from { opacity: .45; transform: translateX(-50%) scale(.92); }
+    to { opacity: .9; transform: translateX(-50%) scale(1.08); }
+}
+
+.modal-overlay.active {
+    animation: ppOverlay .25s ease-out both;
+}
+.modal-overlay.active .modal-box {
+    animation: ppModal .55s cubic-bezier(.16,1,.3,1) both;
+}
+@keyframes ppOverlay {
+    from { backdrop-filter: blur(0); }
+    to { backdrop-filter: blur(10px); }
+}
+@keyframes ppModal {
+    0% { opacity: 0; transform: translateY(30px) scale(.88) rotateX(7deg); }
+    70% { opacity: 1; transform: translateY(-4px) scale(1.015) rotateX(0); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.done-animated-container {
+    animation: ppSuccess .65s cubic-bezier(.16,1,.3,1) both;
+}
+.checkmark-circle {
+    position: relative;
+}
+.checkmark-circle::before,
+.checkmark-circle::after {
+    content: "";
+    position: absolute;
+    inset: -9px;
+    border-radius: 50%;
+    border: 2px solid rgba(16,185,129,.35);
+    animation: ppRing 1.5s ease-out infinite;
+}
+.checkmark-circle::after { animation-delay: .55s; }
+@keyframes ppSuccess {
+    from { opacity: 0; transform: scale(.8) translateY(12px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes ppRing {
+    from { transform: scale(.75); opacity: .85; }
+    to { transform: scale(1.6); opacity: 0; }
+}
+
+.pp-particle {
+    position: fixed;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: -2;
+    background: rgba(255,255,255,.32);
+    box-shadow: 0 0 12px rgba(255,255,255,.25);
+    animation: ppParticle 9s ease-in-out infinite;
+}
+@keyframes ppParticle {
+    0%,100% { transform: translate3d(0,0,0); opacity: .12; }
+    50% { transform: translate3d(25px,-70px,0); opacity: .65; }
+}
+
+input:focus,
+textarea:focus {
+    box-shadow: 0 0 0 4px rgba(234,88,12,.10), 0 8px 22px rgba(0,0,0,.08);
+    transform: translateY(-1px);
+}
+
+@media (max-width: 700px) {
+    .header-right {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+    .header-right button {
+        font-size: 10px;
+        padding: 7px 10px;
+    }
+    .card:hover {
+        transform: translateY(-3px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+#ppStartup{position:fixed;inset:0;z-index:999999;display:flex;align-items:center;justify-content:center;overflow:hidden;background:radial-gradient(circle at 50% 45%,rgba(234,88,12,.18),transparent 28%),radial-gradient(circle at 25% 75%,rgba(56,189,248,.10),transparent 25%),#08090d;transition:opacity .7s ease,visibility .7s}
+#ppStartup.pp-hide{opacity:0;visibility:hidden;pointer-events:none}
+.pp-startup-grid{position:absolute;inset:-20%;opacity:.18;background-image:linear-gradient(rgba(255,255,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.08) 1px,transparent 1px);background-size:45px 45px;transform:perspective(600px) rotateX(55deg) scale(1.5);animation:ppGrid 8s linear infinite}
+@keyframes ppGrid{to{transform:perspective(600px) rotateX(55deg) scale(1.5) translateY(45px)}}
+.pp-startup-content{position:relative;z-index:2;text-align:center}
+.pp-startup-logo{position:relative;width:86px;height:86px;margin:0 auto 25px;border-radius:24px;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#ff7a18,#ea580c);box-shadow:0 0 30px rgba(234,88,12,.55),0 0 90px rgba(234,88,12,.18);animation:ppLogoIn .9s cubic-bezier(.16,1,.3,1) both,ppPulse 2s ease-in-out 1s infinite}
+.pp-startup-logo:before,.pp-startup-logo:after{content:"";position:absolute;border-radius:30px;border:1px solid rgba(255,159,67,.5);animation:ppRing 1.8s ease-out infinite}
+.pp-startup-logo:before{inset:-11px}.pp-startup-logo:after{inset:-24px;animation-delay:.6s;border-color:rgba(255,107,26,.16)}
+.pp-startup-icon{color:#fff;font-size:38px;font-weight:900;transform:rotate(-8deg)}
+@keyframes ppLogoIn{0%{opacity:0;transform:scale(.3) rotate(-20deg);filter:blur(8px)}65%{opacity:1;transform:scale(1.08) rotate(3deg);filter:blur(0)}100%{transform:scale(1)}}
+@keyframes ppPulse{50%{box-shadow:0 0 45px rgba(234,88,12,.8),0 0 120px rgba(234,88,12,.25)}}
+@keyframes ppRing{0%{transform:scale(.75);opacity:.9}100%{transform:scale(1.22);opacity:0}}
+.pp-startup-title{margin:0;color:#fff;font-size:clamp(32px,5vw,52px);line-height:1;font-weight:800;letter-spacing:-.035em;opacity:0;animation:ppTitle .75s cubic-bezier(.16,1,.3,1) .35s forwards}
+.pp-startup-title span{background:linear-gradient(90deg,#fff,#ff9f43,#fff,#38bdf8,#fff);background-size:280% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:ppShine 2.6s linear .9s infinite}
+@keyframes ppTitle{to{opacity:1;transform:translateY(0)}}
+@keyframes ppShine{to{background-position:280% 50%}}
+.pp-startup-subtitle{margin:13px 0 0;color:rgba(255,255,255,.55);font-size:13px;letter-spacing:.22em;text-transform:uppercase;opacity:0;animation:ppFade .6s ease .65s forwards}
+.pp-startup-status{margin-top:32px;display:flex;align-items:center;justify-content:center;gap:9px;color:rgba(255,255,255,.65);font-size:12px;opacity:0;animation:ppFade .6s ease .9s forwards}
+.pp-startup-dot{width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 12px #34d399;animation:ppDot 1s ease-in-out infinite}
+@keyframes ppDot{50%{transform:scale(1.6);opacity:.5}}
+.pp-startup-progress{width:min(280px,70vw);height:2px;margin:15px auto 0;overflow:hidden;border-radius:99px;background:rgba(255,255,255,.1);opacity:0;animation:ppFade .6s ease 1s forwards}
+.pp-startup-progress span{display:block;width:0;height:100%;background:linear-gradient(90deg,#ea580c,#ff9f43,#38bdf8);box-shadow:0 0 15px rgba(255,107,26,.7);animation:ppProgress 2.25s cubic-bezier(.2,.7,.2,1) .9s forwards}
+@keyframes ppProgress{55%{width:58%}82%{width:82%}100%{width:100%}}
+@keyframes ppFade{to{opacity:1;transform:translateY(0)}}
+.pp-startup-particle{position:absolute;width:3px;height:3px;border-radius:50%;background:rgba(255,255,255,.5);box-shadow:0 0 10px rgba(255,255,255,.4);animation:ppParticle 4s ease-in-out infinite}
+@keyframes ppParticle{0%,100%{opacity:.05;transform:translate3d(0,0,0) scale(.6)}50%{opacity:.8;transform:translate3d(20px,-60px,0) scale(1.3)}}
+@media(prefers-reduced-motion:reduce){#ppStartup *{animation-duration:.001ms!important;animation-iteration-count:1!important}}
+    </style>
+</head>
+<body><div id="ppStartup" aria-label="PaperPilot.AI loading"><div class="pp-startup-grid"></div><div class="pp-startup-content"><div class="pp-startup-logo"><div class="pp-startup-icon">P</div></div><h1 class="pp-startup-title"><span>PaperPilot.AI</span></h1><div class="pp-startup-subtitle">Handwritten → Professional</div><div class="pp-startup-status"><span class="pp-startup-dot"></span><span>Initializing PaperPilot...</span></div><div class="pp-startup-progress"><span></span></div></div></div>
+
+    <div id="splashScreen" class="splash-screen"></div>
+
+    <div id="mainAppWrapper">
+        <header class="no-print">
+            <div class="header-left">
+                <img src="paperpilot.png" class="app-logo" alt="PaperPilot Logo" onerror="this.style.display='none';">
+                <div>
+                    <h1><span class="title-orange">PAPER</span><span class="title-black">PILOT</span><span class="title-orange">.AI</span></h1>
+                    <p>BY ABHISHEK DHARMADHIKARI</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <button id="themeToggleBtn" class="btn-theme">🌙 Dark Mode</button>
+                <button id="marathiHelperBtn" class="btn-action" style="background: linear-gradient(135deg, #d97706, #f59e0b);">⌨️ Marathi Helper</button>
+                <button id="settingsToggleBtn" class="btn-settings">⚙️ API Settings (<span id="keyCountBadge">0</span>)</button>
+                <button id="contactToggleBtn" class="btn-contact">📧 Contact Us</button>
+            </div>
+        </header>
+
+        <div id="settingsModal" class="modal-overlay no-print">
+            <div class="modal-box">
+                <div class="modal-title-bar">
+                    <h3>🔑 Gemini API Keys</h3>
+                    <button id="closeSettingsBtn" class="close-x">&times;</button>
+                </div>
+                <div class="key-input-group">
+                    <input type="password" id="newKeyInput" placeholder="Paste Gemini API Key here...">
+                    <button id="addKeyBtn" class="btn-add">Add</button>
+                </div>
+                <div class="keys-list" id="keysContainer"></div>
+                <div style="text-align: right; margin-top: 18px;">
+                    <button id="saveAllKeysBtn" style="background: #10b981; color: white; padding: 9px 24px;" class="btn-action">Done</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="contactModal" class="modal-overlay no-print">
+            <div class="modal-box">
+                <div class="modal-title-bar">
+                    <h3>📫 Contact Us & Support</h3>
+                    <button id="closeContactBtn" class="close-x">&times;</button>
+                </div>
+                <div class="contact-card-box">
+                    <p style="margin: 0 0 12px 0; font-size: 12px; color: var(--text-muted);">
+                        Feel free to contact us for any business inquiries or support:
+                    </p>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <input type="text" id="contactNameInput" placeholder="Your Full Name..." style="width: 100%; box-sizing: border-box;">
+                        <input type="text" id="contactEmailInput" placeholder="Your Email Address..." style="width: 100%; box-sizing: border-box;">
+                        <textarea id="contactMessageInput" placeholder="Write your message here..." rows="4" style="width: 100%; box-sizing: border-box; resize: vertical;"></textarea>
+                    </div>
+                    <div style="margin-top: 14px; font-size: 11px; text-align: center; color: #0284c7; font-weight: bold;">
+                        ✉️ Official Mail: business.abhi.mail@gmail.com
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 18px;">
+                    <button id="closeContactDoneBtn" style="background-color: #64748b; color: white; padding: 9px 18px;" class="btn-action">Close</button>
+                    <button id="sendQueryBtn" style="background: linear-gradient(135deg, #ea580c, #f97316); color: white; padding: 9px 22px;" class="btn-action">🚀 Send Message</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="marathiModal" class="modal-overlay no-print">
+            <div class="modal-box">
+                <div class="modal-title-bar">
+                    <h3>⌨️ Google Marathi Converter</h3>
+                    <button id="closeMarathiBtn" class="close-x">&times;</button>
+                </div>
+                <div style="margin-top: 10px;">
+                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Type in English (e.g. <b>namaskar abhishek</b>):</p>
+                    <textarea id="englishTextInput" placeholder="Type here in English..." rows="3" style="width: 100%; font-size: 14px; box-sizing: border-box; margin-bottom: 12px; resize: vertical;"></textarea>
+                    
+                    <p style="font-size: 12px; color: #10b981; font-weight: bold; margin-bottom: 6px;">Marathi Text Output:</p>
+                    <textarea id="marathiResultInput" readonly placeholder="Marathi output text..." rows="3" style="width: 100%; border: 1px solid #10b981 !important; background: rgba(16, 185, 129, 0.1) !important; font-size: 15px; font-weight: bold; color: #10b981 !important; box-sizing: border-box; resize: vertical;"></textarea>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 18px; justify-content: flex-end;">
+                    <button id="copyMarathiBtn" style="background: #0284c7; color: white; padding: 9px 18px;" class="btn-action">📋 Copy Marathi Text</button>
+                </div>
+            </div>
+        </div>
+
+        <main class="main-container">
+            <section class="no-print">
+                <div class="card">
+                    <h2>School Format (OPTIONAL)</h2>
+                    <label for="formatFileInput" class="file-label" id="formatLabel">
+                        <span style="font-size:24px; margin-bottom:4px;">📄</span>
+                        Select School Header Image
+                    </label>
+                    <input type="file" id="formatFileInput" accept="image/*" style="display: none;">
+                    <div id="formatStatus" style="text-align: center; font-size: 12px; color: #10b981; margin-top: 6px; font-weight: bold;"></div>
+                    <button id="deleteFormatBtn" class="btn-delete-file">❌ Delete Format</button>
+                </div>
+
+                <div class="card">
+                    <h2>Handwritten Papers / PDF</h2>
+                    <label for="handwrittenInput" class="file-label" id="inputLabel">
+                        <span style="font-size:24px; margin-bottom:4px;">📚</span>
+                        Select Photos or PDF Pages
+                    </label>
+                    <input type="file" id="handwrittenInput" style="display: none;">
+                    <div id="handwrittenStatus" style="text-align: center; font-size: 12px; color: #ea580c; margin-top: 6px; font-weight: bold;"></div>
+                    <button id="deleteHandwrittenBtn" class="btn-delete-file">❌ Delete Selected Files</button>
+                </div>
+
+                <div class="card">
+                    <h2>Watermark (OPTIONAL)</h2>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-top: 6px;">
+                        <input type="checkbox" id="enableWatermarkChk" style="width: 18px; height: 18px; cursor: pointer;">
+                        <label for="enableWatermarkChk" style="font-size: 13px; font-weight: 700; cursor: pointer;">Add Watermark to Paper</label>
+                    </div>
+                    
+                    <div id="watermarkInputBox" style="display: none; margin-top: 12px;">
+                        <input type="text" id="watermarkTextInput" placeholder="Enter School Name (e.g. ABHI CLASSES)" 
+                               style="width: 100%; padding: 10px; font-size: 13px; box-sizing: border-box;">
+                    </div>
+                </div>
+
+                <button id="generateBtn" class="btn-generate">🚀 Ready for Magic</button>
+                
+                <div class="card who-we-are-card">
+                    <h3 style="margin: 0 0 8px 0; font-size: 14px; color: var(--text-color); display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <span>💡</span> Who We Are
+                    </h3>
+                    <p style="margin: 0; font-size: 11px; color: var(--text-muted); line-height: 1.5;">
+                        <b>PaperPilot.AI</b> transforms handwritten exam papers & PDF documents into perfectly formatted MS Word & PDF files.
+                    </p>
+                    <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--card-border); font-size: 11px; font-weight: bold; color: var(--primary-orange);">
+                        🚀 Created by Abhishek Dharmadhikari
+                    </div>
+                </div>
+
+                <div id="doneAnimationContainer" class="done-animated-container">
+                    <div class="checkmark-circle">
+                        <span class="checkmark-icon">✓</span>
+                    </div>
+                    <div class="done-text">Paper Ready Successfully!</div>
+                </div>
+
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-bar" id="progressBar"></div>
+                    <div class="progress-text" id="progressText">0% Complete...</div>
+                </div>
+
+                <div id="rotationStatus" style="text-align: center; font-size: 12px; margin-top: 10px; font-weight: bold; color: white;"></div>
+            </section>
+
+            <section>
+                <div class="preview-header no-print">
+                    <h2>Paper Digital Preview (A4)</h2>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="saveAllDocBtn" class="btn-action" style="background: linear-gradient(135deg, #2563eb, #1d4ed8);">💾 Save Word Document</button>
+                        <button id="printBtn" class="btn-action" style="background: linear-gradient(135deg, #059669, #047857);">🖨️ PDF / Print</button>
+                    </div>
+                </div>
+
+                <div class="workspace" id="workspaceContainer">
+                    <div class="page-block-wrapper" id="defaultPlaceholder">
+                        <div class="printable-paper">
+                            <p style="text-align: center; color: #64748b; margin-top: 250px; font-weight:600;">
+                                📄 Upload your handwritten paper or PDF to see the formatted A4 paper preview here...
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        setTimeout(() => {
+            const splash = document.getElementById('splashScreen');
+            if(splash) {
+                splash.style.opacity = '0';
+                setTimeout(() => {
+                    splash.style.display = 'none';
+                    document.getElementById('mainAppWrapper').style.display = 'block';
+                }, 600);
+            }
+        }, 1800);
+
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+        const currentTheme = localStorage.getItem('app_theme') || 'light';
+
+        if (currentTheme === 'dark') {
+            document.body.classList.add('dark-theme');
+            themeToggleBtn.innerText = "☀️ Light Mode";
+        }
+
+        themeToggleBtn.onclick = function() {
+            document.body.classList.toggle('dark-theme');
+            if (document.body.classList.contains('dark-theme')) {
+                themeToggleBtn.innerText = "☀️ Light Mode";
+                localStorage.setItem('app_theme', 'dark');
+            } else {
+                themeToggleBtn.innerText = "🌙 Dark Mode";
+                localStorage.setItem('app_theme', 'light');
+            }
+        };
+
+        const englishTextInput = document.getElementById('englishTextInput');
+        const marathiResultInput = document.getElementById('marathiResultInput');
+        let typingTimer = null;
+
+        englishTextInput.oninput = function() {
+            clearTimeout(typingTimer);
+            const text = this.value;
+            
+            if(!text.trim()) {
+                marathiResultInput.value = "";
+                return;
+            }
+
+            typingTimer = setTimeout(() => {
+                fetch('/transliterate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.result) {
+                        marathiResultInput.value = data.result;
+                    }
+                })
+                .catch(err => console.error("Transliteration Error:", err));
+            }, 150);
+        };
+
+        let apiKeysList = JSON.parse(localStorage.getItem('gemini_rotation_keys')) || [];
+
+        const settingsToggleBtn = document.getElementById('settingsToggleBtn');
+        const settingsModal = document.getElementById('settingsModal');
+        const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+        const saveAllKeysBtn = document.getElementById('saveAllKeysBtn');
+        const newKeyInput = document.getElementById('newKeyInput');
+        const addKeyBtn = document.getElementById('addKeyBtn');
+        const keysContainer = document.getElementById('keysContainer');
+        const keyCountBadge = document.getElementById('keyCountBadge');
+
+        const contactToggleBtn = document.getElementById('contactToggleBtn');
+        const contactModal = document.getElementById('contactModal');
+        const closeContactBtn = document.getElementById('closeContactBtn');
+        const closeContactDoneBtn = document.getElementById('closeContactDoneBtn');
+        const sendQueryBtn = document.getElementById('sendQueryBtn');
+        const contactNameInput = document.getElementById('contactNameInput');
+        const contactEmailInput = document.getElementById('contactEmailInput');
+        const contactMessageInput = document.getElementById('contactMessageInput');
+
+        const marathiHelperBtn = document.getElementById('marathiHelperBtn');
+        const marathiModal = document.getElementById('marathiModal');
+        const closeMarathiBtn = document.getElementById('closeMarathiBtn');
+        const copyMarathiBtn = document.getElementById('copyMarathiBtn');
+
+        const formatFileInput = document.getElementById('formatFileInput');
+        const formatStatus = document.getElementById('formatStatus');
+        const deleteFormatBtn = document.getElementById('deleteFormatBtn');
+        
+        const handwrittenInput = document.getElementById('handwrittenInput');
+        const handwrittenStatus = document.getElementById('handwrittenStatus');
+        const deleteHandwrittenBtn = document.getElementById('deleteHandwrittenBtn');
+        
+        const enableWatermarkChk = document.getElementById('enableWatermarkChk');
+        const watermarkInputBox = document.getElementById('watermarkInputBox');
+        const watermarkTextInput = document.getElementById('watermarkTextInput');
+
+        const generateBtn = document.getElementById('generateBtn');
+        const rotationStatus = document.getElementById('rotationStatus');
+        const workspaceContainer = document.getElementById('workspaceContainer');
+        const doneAnimationContainer = document.getElementById('doneAnimationContainer');
+        
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+
+        let base64Format = null;
+        let handwrittenImagesList = [];
+        let base64Pdf = null;
+        let selectedPaperType = null;
+        let progressInterval = null;
+
+        handwrittenInput.accept = "image/*, application/pdf";
+        handwrittenInput.multiple = true;
+
+        enableWatermarkChk.onchange = function() {
+            watermarkInputBox.style.display = this.checked ? 'block' : 'none';
+        };
+
+        marathiHelperBtn.onclick = () => marathiModal.classList.add('active');
+        closeMarathiBtn.onclick = () => marathiModal.classList.remove('active');
+        copyMarathiBtn.onclick = () => {
+            if(!marathiResultInput.value) return alert('Please enter text first!');
+            marathiResultInput.select();
+            document.execCommand('copy');
+            alert('✔️ Copied: ' + marathiResultInput.value);
+            marathiModal.classList.remove('active');
+        };
+
+        function renderKeys() {
+            keyCountBadge.innerText = apiKeysList.length;
+            keysContainer.innerHTML = '';
+            apiKeysList.forEach((key, index) => {
+                const div = document.createElement('div');
+                div.className = "key-row";
+                div.innerHTML = `<span>🔑 Key ${index + 1}: ...${key.substring(key.length - 6)}</span><button onclick="deleteKey(${index})" class="btn-del">Delete</button>`;
+                keysContainer.appendChild(div);
+            });
+        }
+
+        settingsToggleBtn.onclick = () => settingsModal.classList.add('active');
+        closeSettingsBtn.onclick = () => settingsModal.classList.remove('active');
+        saveAllKeysBtn.onclick = () => settingsModal.classList.remove('active');
+
+        contactToggleBtn.onclick = () => contactModal.classList.add('active');
+        closeContactBtn.onclick = () => contactModal.classList.remove('active');
+        closeContactDoneBtn.onclick = () => contactModal.classList.remove('active');
+
+        sendQueryBtn.onclick = function() {
+            const message = contactMessageInput.value.trim();
+            if (!message) return alert('Please enter your message!');
+            alert('✔️ Thank you! Your response has been submitted successfully.');
+            contactNameInput.value = '';
+            contactEmailInput.value = '';
+            contactMessageInput.value = '';
+            contactModal.classList.remove('active');
+        };
+
+        addKeyBtn.onclick = function() {
+            const keyVal = newKeyInput.value.trim();
+            if(!keyVal) return;
+            apiKeysList.push(keyVal);
+            localStorage.setItem('gemini_rotation_keys', JSON.stringify(apiKeysList));
+            newKeyInput.value = '';
+            renderKeys();
+        };
+
+        window.deleteKey = function(index) {
+            apiKeysList.splice(index, 1);
+            localStorage.setItem('gemini_rotation_keys', JSON.stringify(apiKeysList));
+            renderKeys();
+        };
+
+        formatFileInput.onchange = function() {
+            if(this.files && this.files[0]) {
+                formatStatus.innerText = `✔️ Selected: ${this.files[0].name}`;
+                deleteFormatBtn.style.display = "block";
+                const reader = new FileReader();
+                reader.onload = (e) => base64Format = e.target.result.split(',')[1];
+                reader.readAsDataURL(this.files[0]);
+            }
+        };
+
+        deleteFormatBtn.onclick = function() {
+            formatFileInput.value = "";
+            base64Format = null;
+            formatStatus.innerText = "";
+            deleteFormatBtn.style.display = "none";
+        };
+
+        handwrittenInput.onchange = async function() {
+            handwrittenImagesList = [];
+            base64Pdf = null;
+            selectedPaperType = null;
+
+            if(this.files && this.files.length > 0) {
+                deleteHandwrittenBtn.style.display = "block";
+                const file = this.files[0];
+
+                if (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")) {
+                    selectedPaperType = "pdf";
+                    handwrittenStatus.innerText = `✔️ Selected PDF: ${file.name}`;
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        base64Pdf = e.target.result.split(',')[1];
+                        handwrittenImagesList = [];
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    selectedPaperType = "image";
+                    handwrittenStatus.innerText = `✔️ Selected: ${this.files.length} page(s)`;
+                    const files = Array.from(this.files);
+                    for (const f of files) {
+                        const data = await new Promise((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.onload = e => resolve(e.target.result.split(',')[1]);
+                            reader.onerror = reject;
+                            reader.readAsDataURL(f);
+                        });
+                        handwrittenImagesList.push({name: f.name, data: data});
+                    }
+                }
+            }
+        };
+
+        deleteHandwrittenBtn.onclick = function() {
+            handwrittenInput.value = "";
+            handwrittenImagesList = [];
+            base64Pdf = null;
+            handwrittenStatus.innerText = "";
+            deleteHandwrittenBtn.style.display = "none";
+        };
+
+        document.getElementById('printBtn').onclick = () => window.print();
+
+        async function convertSVGtoPNGImages(containerNode) {
+            const svgs = containerNode.querySelectorAll('svg');
+            for (let svg of svgs) {
+                try {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const bbox = svg.getBBox ? svg.getBBox() : { width: 650, height: 400 };
+                    const width = svg.clientWidth || parseFloat(svg.getAttribute('width')) || bbox.width || 650;
+                    const height = svg.clientHeight || parseFloat(svg.getAttribute('height')) || bbox.height || 400;
+
+                    canvas.width = width * 2;
+                    canvas.height = height * 2;
+                    ctx.scale(2, 2);
+
+                    const xml = new XMLSerializer().serializeToString(svg);
+                    const svgBlob = new Blob([xml], { type: 'image/svg+xml;charset=utf-8' });
+                    const URL = window.URL || window.webkitURL || window;
+                    const blobURL = URL.createObjectURL(svgBlob);
+
+                    const img = new Image();
+                    await new Promise((resolve) => {
+                        img.onload = () => {
+                            ctx.fillStyle = "#ffffff";
+                            ctx.fillRect(0, 0, width, height);
+                            ctx.drawImage(img, 0, 0, width, height);
+                            const pngDataUrl = canvas.toDataURL('image/png');
+                            
+                            const imgTag = document.createElement('img');
+                            imgTag.src = pngDataUrl;
+                            imgTag.width = width;
+                            imgTag.height = height;
+                            imgTag.style.maxWidth = "100%";
+                            imgTag.style.height = "auto";
+                            imgTag.style.display = "block";
+                            imgTag.style.margin = "15px auto";
+
+                            svg.parentNode.replaceChild(imgTag, svg);
+                            URL.revokeObjectURL(blobURL);
+                            resolve();
+                        };
+                        img.onerror = () => resolve();
+                        img.src = blobURL;
+                    });
+                } catch (e) {
+                    console.error("SVG Conversion Error:", e);
+                }
+            }
+        }
+
+        async function downloadAsWord(htmlContent, filename) {
+            try {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = htmlContent;
+                await convertSVGtoPNGImages(tempDiv);
+
+                let wmText = "";
+                if (enableWatermarkChk && enableWatermarkChk.checked) {
+                    wmText = watermarkTextInput.value.trim();
+                }
+
+                const response = await fetch('/save-word-file', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        html_content: tempDiv.innerHTML,
+                        filename: filename,
+                        watermark_text: wmText
+                    })
+                });
+                
+                const result = await response.json();
+                if(result.status === "success") {
+                    alert("✔️ File successfully Saved on Desktop:\n" + result.path);
+                } else if (result.error) {
+                    alert("❌ Error: " + result.error);
+                }
+            } catch(err) {
+                alert("Error saving Word file: " + err.message);
+            }
+        }
+
+        document.getElementById('saveAllDocBtn').onclick = function() {
+            const paper = document.querySelector('.printable-paper');
+            if (!paper || paper.innerText.trim() === "") {
+                return alert("Please Generate Paper First, Then Save It!");
+            }
+            downloadAsWord(paper.innerHTML, 'Complete_Exam_Paper.doc');
+        };
+
+        function startProgressBar() {
+            progressContainer.style.display = "block";
+            progressBar.style.width = "0%";
+            progressText.innerText = "0% Complete...";
+            rotationStatus.innerText = "";
+            
+            let currentProgress = 0;
+            clearInterval(progressInterval);
+            
+            progressInterval = setInterval(() => {
+                if (currentProgress < 30) {
+                    currentProgress += Math.floor(Math.random() * 5) + 3;
+                } else if (currentProgress < 75) {
+                    currentProgress += Math.floor(Math.random() * 3) + 1;
+                } else if (currentProgress < 95) {
+                    currentProgress += 1;
+                }
+                if (currentProgress > 95) currentProgress = 95;
+                
+                progressBar.style.width = currentProgress + "%";
+                progressText.innerText = currentProgress + "% Complete (Formatting Paper...)";
+            }, 400);
+        }
+
+        function finishProgressBar(isSuccess) {
+            clearInterval(progressInterval);
+            if (isSuccess) {
+                progressBar.style.width = "100%";
+                progressText.innerText = "100% Complete!";
+                setTimeout(() => progressContainer.style.display = "none", 2000);
+            } else {
+                progressContainer.style.display = "none";
+            }
+        }
+
+        generateBtn.onclick = async function() {
+            if(apiKeysList.length === 0) return alert('Please add an API Key first!');
+            if(selectedPaperType === 'pdf' && !base64Pdf) return alert('Please wait for the PDF to finish loading, then Generate.');
+            if(selectedPaperType === 'image' && handwrittenImagesList.length === 0) return alert('Please wait for the image(s) to finish loading, then Generate.');
+            if(!selectedPaperType) return alert('Please select handwritten image(s) or a PDF!');
+
+            generateBtn.innerText = "⏳ Please Wait...";
+            generateBtn.disabled = true;
+            doneAnimationContainer.style.display = "none";
+
+            startProgressBar();
+
+            try {
+                const response = await fetch('/generate-paper', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        api_keys: apiKeysList,
+                        base64_format: base64Format,
+                        handwritten_list: selectedPaperType === 'image' ? handwrittenImagesList : [],
+                        pdf_base64: selectedPaperType === 'pdf' ? base64Pdf : null
+                    })
+                });
+
+                if(!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error || "Something went wrong.");
+                }
+
+                const resultJson = await response.json();
+                let aiHtml = (resultJson.html || '').trim();
+
+                if (!aiHtml) {
+                    throw new Error('AI returned an empty paper. Please try again.');
+                }
+
+                const parser = new DOMParser();
+                const parsed = parser.parseFromString(aiHtml, 'text/html');
+                if (parsed.body && parsed.body.innerHTML.trim()) {
+                    aiHtml = parsed.body.innerHTML.trim();
+                }
+
+                workspaceContainer.innerHTML = "";
+                const wrapper = document.createElement('div');
+                wrapper.className = "page-block-wrapper";
+
+                const controlBar = document.createElement('div');
+                controlBar.className = "page-control-bar no-print";
+                const btnSingle = document.createElement('button');
+                btnSingle.className = "btn-single-save";
+                btnSingle.innerHTML = `📄 Save Paper`;
+                
+                btnSingle.onclick = () => downloadAsWord(paper.innerHTML, `Exam_Paper.doc`);
+                controlBar.appendChild(btnSingle);
+
+                const paper = document.createElement('div');
+                paper.className = "printable-paper";
+                paper.contentEditable = "true";
+                paper.innerHTML = aiHtml;
+
+                if (enableWatermarkChk.checked && watermarkTextInput.value.trim() !== "") {
+                    const wmDiv = document.createElement('div');
+                    wmDiv.className = 'paper-watermark';
+                    wmDiv.innerText = watermarkTextInput.value.trim();
+                    paper.appendChild(wmDiv);
+                }
+
+                wrapper.appendChild(controlBar);
+                wrapper.appendChild(paper);
+                workspaceContainer.appendChild(wrapper);
+                workspaceContainer.style.display = 'flex';
+                workspaceContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                
+                rotationStatus.style.color = "#10b981";
+                rotationStatus.innerText = `✔️ Paper Created Successfully!`;
+                
+                doneAnimationContainer.style.display = "block";
+                finishProgressBar(true);
+
+            } catch (err) {
+                alert('Error: ' + err.message);
+                workspaceContainer.innerHTML = `<div class="page-block-wrapper"><div class="printable-paper" style="color:#dc2626;"><h3>❌ Paper could not be displayed</h3><p>${String(err.message).replace(/[<>]/g, '')}</p></div></div>`;
+                rotationStatus.style.color = "#ef4444";
+                rotationStatus.innerText = `❌ Generation Failed!`;
+                doneAnimationContainer.style.display = "none";
+                finishProgressBar(false);
+            } finally {
+                generateBtn.innerText = "🚀 Ready for Magic";
+                generateBtn.disabled = false;
+            }
+        };
+
+        renderKeys();
+    
+/* Premium decorative UI */
+(function () {
+    const layer = document.createElement('div');
+    layer.setAttribute('aria-hidden', 'true');
+
+    for (let i = 0; i < 22; i++) {
+        const p = document.createElement('span');
+        p.className = 'pp-particle';
+        p.style.left = (Math.random() * 100) + 'vw';
+        p.style.top = (Math.random() * 100) + 'vh';
+        p.style.animationDelay = (-Math.random() * 9) + 's';
+        p.style.animationDuration = (7 + Math.random() * 7) + 's';
+        p.style.opacity = (.12 + Math.random() * .32).toFixed(2);
+        layer.appendChild(p);
+    }
+
+    document.body.appendChild(layer);
+
+    const rippleStyle = document.createElement('style');
+    rippleStyle.textContent = `
+        .pp-ripple {
+            position:absolute;
+            border-radius:50%;
+            pointer-events:none;
+            background:rgba(255,255,255,.30);
+            transform:scale(0);
+            animation:ppRipple .55s ease-out forwards;
+        }
+        @keyframes ppRipple {
+            to { transform:scale(1); opacity:0; }
+        }
+    `;
+    document.head.appendChild(rippleStyle);
+
+    document.addEventListener('click', function (e) {
+        const button = e.target.closest('button');
+        if (!button) return;
+
+        const rect = button.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        const ripple = document.createElement('span');
+
+        ripple.className = 'pp-ripple';
+        ripple.style.width = size + 'px';
+        ripple.style.height = size + 'px';
+        ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+        ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+
+        button.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 600);
+    });
+
+    document.querySelectorAll('.card').forEach(card => {
+        card.addEventListener('mousemove', e => {
+            if (window.innerWidth < 900) return;
+            const r = card.getBoundingClientRect();
+            const x = (e.clientX - r.left) / r.width - .5;
+            const y = (e.clientY - r.top) / r.height - .5;
+            card.style.transform =
+                `perspective(900px) rotateX(${(-y * 1.8).toFixed(2)}deg) rotateY(${(x * 1.8).toFixed(2)}deg) translateY(-5px) scale(1.008)`;
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = '';
+        });
+    });
+})();
+
+    </script>
+<script>(function(){const s=document.getElementById('ppStartup');if(!s)return;for(let i=0;i<28;i++){const p=document.createElement('span');p.className='pp-startup-particle';p.style.left=Math.random()*100+'%';p.style.top=Math.random()*100+'%';p.style.animationDelay=-Math.random()*4+'s';p.style.animationDuration=3.5+Math.random()*3+'s';s.appendChild(p)}const hide=()=>{s.classList.add('pp-hide');setTimeout(()=>s.remove(),750)};window.addEventListener('load',()=>setTimeout(hide,2700));setTimeout(()=>{if(document.body.contains(s))hide()},4500)})();</script></body>
+</html>
