@@ -327,11 +327,20 @@
             color: #000000 !important;
         }
 
-        .printable-paper svg { 
+        /* 🔴 ISOLATED SVG DIAGRAM & OVERFLOW PROTECTION */
+        .printable-paper svg, div > svg { 
             display: block !important; 
             max-width: 100% !important; 
             height: auto !important; 
-            margin: 12px auto !important;
+            margin: 15px auto !important;
+            clear: both !important;
+            page-break-inside: avoid !important;
+            overflow: visible !important;
+        }
+
+        .printable-paper svg text {
+            font-family: 'Times New Roman', 'Mangal', sans-serif !important;
+            white-space: pre !important;
         }
 
    /* 🌟 FAINT & LIGHT WATERMARK FIX */

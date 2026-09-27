@@ -31,6 +31,7 @@ def home():
                 
     return "<h2 style='color:red; text-align:center;'>❌ index.html सापडली नाही!</h2>", 404
 
+
 @app.route('/transliterate', methods=['POST'])
 def transliterate():
     try:
@@ -50,6 +51,7 @@ def transliterate():
         return jsonify({'result': text})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
 
 @app.route('/generate-paper', methods=['POST'])
 def generate_paper():
@@ -85,37 +87,42 @@ def generate_paper():
         if not images_data:
             return jsonify({'error': 'No document image or PDF provided!'}), 400
 
-        # 🔴 STRICT CONTINUOUS NATURAL FLOW PROMPT (ZERO UNWANTED GAPS)
+        # STRICT PROMPT
         core_prompt = f"""
-            YOU ARE A PROFESSIONAL SCHOOL EXAM QUESTION PAPER TYPIST.
-            The user uploaded {len(images_data)} image(s) of exam questions.
+            YOU ARE A STRICT OCR AND PRINTED A4 QUESTION PAPER CONVERTER.
+            The user uploaded {len(images_data)} image(s) of handwritten exam questions.
 
-            CRITICAL CONTINUOUS FLOW RULES (DO NOT LEAVE GAPS):
-            1. SEAMLESS NATURAL FLOW:
-               - Transcribe ALL questions continuously from Q.1 to the last question.
-               - DO NOT create separate empty page boxes or force artificial page breaks between images.
-               - If image 1 ends halfway, image 2's content MUST continue immediately below it without leaving any large blank white gaps.
+            ABSOLUTE STRICT RULES (NO ASSUMPTIONS / NO CREATIVITY / NO SELF-MODIFICATIONS):
 
-            2. 100% ACCURATE VERBATIM TRANSCRIPTION:
-               - Transcribe ONLY what is physically written on the uploaded images.
-               - DO NOT add fake questions, extra paragraphs, or sample text not written by the teacher.
+            1. 100% VERBATIM & NO SELF-ADDED CONTENT:
+               - Do NOT change, add, correct, guess, or rephrase ANY question, word, line, or number.
+               - Transcribe EXACTLY what is physically written on the page in Marathi/English without adding extra questions or sample content.
 
-            3. STRIP ALL NOTEBOOK BRANDING & METADATA:
-               - REMOVE notebook brand names (Classmate, Veda, Sundaram, Navneet, Target, etc.).
-               - REMOVE page numbers written on notebook corners (e.g. Pg 1, 1/3, Date, Page No).
-               - REMOVE stray pencil scratches or background margins.
+            2. STRICT DIAGRAM & IMAGE LAYOUT RULES (CRITICAL):
+               - NEVER draw diagrams with text spilling outside or overlapping with regular text.
+               - If generating an inline SVG for a handwritten diagram, reproduce the geometric shapes, lines, arrows, and labels EXACTLY as drawn in the input.
+               - ALWAYS encapsulate every diagram inside a dedicated container div:
+                 <div style="text-align:center; margin:15px auto; padding:10px; page-break-inside:avoid; clear:both; display:block;"> ...SVG... </div>
+               - Ensure text labels inside SVG diagrams use proper coordinates with sufficient padding so text NEVER bleeds outside the SVG container bounds.
 
-            4. CLEAN QUESTION PAPER FORMATTING:
-               - School Header (if present at top of image 1): Centered and bold.
-               - Main Questions (Q.1, Q.2 / प्र. १, प्र. २): <b>Bold</b> with marks aligned to the right: <span style="float:right;">[Marks]</span>.
-               - Sub-questions (1, 2, a, b, i, ii): Indented neatly with margin-left: 20px.
-               - MCQ Options: If written horizontally, keep in a clean single line with spacing:
+            3. SEAMLESS NATURAL CONTINUOUS FLOW:
+               - Transcribe ALL questions continuously from beginning to end.
+               - Do NOT leave huge blank white gaps or force artificial page breaks between separate uploaded images.
+
+            4. CLEAN NOTEBOOK CLEANUP:
+               - Strip notebook brand names (Classmate, Sundaram, Navneet, Target, etc.).
+               - Strip margin page numbers, dates, pencil scratches, and background rules/lines.
+
+            5. PRINTED A4 QUESTION PAPER FORMATTING:
+               - Header: Centered, clean, and bold.
+               - Main Questions (Q.1 / प्र. १): <b>Bold</b> with marks aligned to the right: <span style="float:right; font-weight:bold;">[Marks]</span>.
+               - Sub-questions (1, 2, a, b, i, ii): Neatly indented with margin-left: 20px.
+               - Options / MCQs: Keep clean spacing:
                  <div style="margin-left:30px; margin-top:4px; margin-bottom:6px;">(A) [Opt 1] &nbsp;&nbsp;&nbsp;&nbsp; (B) [Opt 2] &nbsp;&nbsp;&nbsp;&nbsp; (C) [Opt 3] &nbsp;&nbsp;&nbsp;&nbsp; (D) [Opt 4]</div>
-               - Tables: Clean tables with thin border (`<table style="width:100%; border-collapse:collapse; margin:8px 0;">`).
-               - Diagrams: Centered clean inline SVG (`<svg ...>`).
+               - Tables: <table style="width:100%; border-collapse:collapse; margin:10px 0; border:1px solid #000;">
 
-            5. OUTPUT FORMAT:
-               - Return ONLY raw HTML markup without markdown fences (```html).
+            6. OUTPUT FORMAT:
+               - Output ONLY raw HTML markup. Do NOT wrap in ```html markdown block.
         """
 
         generated_html = ""
@@ -160,6 +167,7 @@ def generate_paper():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
 @app.route('/save-word-file', methods=['POST'])
 def save_word_file():
     try:
@@ -188,41 +196,47 @@ def save_word_file():
                 timestamp = time.strftime("%H%M%S")
                 output_path = os.path.join(desktop_path, f"{base_name}_{timestamp}{ext}")
 
-        word_html = f"""
-        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='[http://www.w3.org/TR/REC-html40](http://www.w3.org/TR/REC-html40)'>
-        <head>
-            <meta charset="utf-8">
-            <title>Exam Paper</title>
-            <style>
-                @page Section1 {{
-                    size: 595.3pt 841.9pt;
-                    margin: 36.0pt 40.0pt 36.0pt 40.0pt;
-                }}
-                div.Section1 {{ page: Section1; }}
-                body {{ 
-                    font-family: 'Times New Roman', 'Mangal', 'Nirmala UI', serif; 
-                    font-size: 13pt; 
-                    line-height: 1.35; 
-                }}
-                table {{ 
-                    width: 100%; 
-                    border-collapse: collapse; 
-                }}
-                td, th {{ 
-                    border: 1px solid #000;
-                    padding: 4px 6px; 
-                    vertical-align: middle; 
-                }}
-            </style>
-        </head>
-        <body>
-            <div class="Section1">
-                {f'<div style="text-align:center; color:#e2e8f0; font-size:36pt; font-weight:bold; margin-bottom:10px;">{watermark_text}</div>' if watermark_text else ''}
-                {html_content}
-            </div>
-        </body>
-        </html>
-        """
+        watermark_div = f'<div style="text-align:center; color:#e2e8f0; font-size:36pt; font-weight:bold; margin-bottom:10px;">{watermark_text}</div>' if watermark_text else ''
+
+        word_html = f"""<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='[http://www.w3.org/TR/REC-html40](http://www.w3.org/TR/REC-html40)'>
+<head>
+    <meta charset="utf-8">
+    <title>Exam Paper</title>
+    <style>
+        @page Section1 {{
+            size: 595.3pt 841.9pt;
+            margin: 36.0pt 40.0pt 36.0pt 40.0pt;
+        }}
+        div.Section1 {{ page: Section1; }}
+        body {{ 
+            font-family: 'Times New Roman', 'Mangal', 'Nirmala UI', serif; 
+            font-size: 13pt; 
+            line-height: 1.35; 
+        }}
+        table {{ 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin: 8px 0;
+        }}
+        td, th {{ 
+            border: 1px solid #000;
+            padding: 5px 8px; 
+            vertical-align: middle; 
+        }}
+        svg {{
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
+        }}
+    </style>
+</head>
+<body>
+    <div class="Section1">
+        {watermark_div}
+        {html_content}
+    </div>
+</body>
+</html>"""
 
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(word_html)
@@ -231,11 +245,12 @@ def save_word_file():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
 if __name__ == '__main__':
     port = 5050
     server_thread = threading.Thread(target=lambda: app.run(host='127.0.0.1', port=port, debug=False))
     server_thread.daemon = True
     server_thread.start()
 
-    webview.create_window('PaperPilot.AI', f'http://127.0.0.1:{port}', width=1300, height=850, resizable=True)
+    webview.create_window('PaperPilot.AI', f'[http://127.0.0.1](http://127.0.0.1):{port}', width=1300, height=850, resizable=True)
     webview.start()
